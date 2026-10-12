@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DROPZONE — Island Operations</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{--ink:#f4f6f7;--muted:#aeb9c4;--line:#ffffff24;--panel:#101820eF;--orange:#ff6a3d;--mint:#b8ff5a}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#152b34;color:var(--ink);font-family:Inter,Arial,sans-serif}canvas{display:block;width:100%;height:100%}
+#game{position:fixed;inset:0;display:none}#shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#071017a8,transparent 42%,#07101726),linear-gradient(0deg,#071017aa,transparent 34%)}
+#hud{position:absolute;inset:0;pointer-events:none;display:none}.topline{position:absolute;left:24px;right:24px;top:20px;display:flex;justify-content:space-between;align-items:flex-start}.wordmark{font:900 24px 'Barlow Condensed',sans-serif;letter-spacing:2px}.wordmark span{color:var(--orange)}.chip{background:#0c151bcc;border:1px solid var(--line);padding:10px 13px;border-radius:5px;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:800}.chip b{color:var(--mint);font-size:16px;display:block;margin-top:3px;letter-spacing:0}
+#reticle{position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%)}#reticle:before,#reticle:after{content:"";position:absolute;background:#fff;box-shadow:0 0 3px #111}#reticle:before{width:2px;height:18px;left:8px}#reticle:after{height:2px;width:18px;top:8px}
+#status{position:absolute;bottom:24px;left:24px;width:235px;background:#101820d9;border:1px solid var(--line);padding:14px;border-radius:5px}.meterlabel{display:flex;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:1.3px;margin:7px 0}.meter{height:7px;background:#ffffff1b;margin-bottom:10px}.fill{height:100%;width:100%}#hp{background:var(--orange)}#shield{background:#4fc8f4}
+#weapon{position:absolute;bottom:25px;right:24px;text-align:right;background:#101820d9;border:1px solid var(--line);padding:12px 17px;border-radius:5px}#weapon small{font-size:10px;color:var(--muted);letter-spacing:1.4px}#ammo{font:800 32px 'Barlow Condensed',sans-serif}#hint{position:absolute;right:24px;bottom:104px;text-align:right;font-size:11px;line-height:1.9;color:#d5dce2;text-shadow:0 1px 4px #000}
+#notice{position:absolute;top:24%;left:50%;transform:translateX(-50%);font:800 24px 'Barlow Condensed',sans-serif;letter-spacing:2px;text-shadow:0 2px 8px #000}
+#lobby{position:fixed;inset:0;overflow:auto;background:radial-gradient(ellipse at 70% 38%,#315a61 0,#172f39 38%,#101820 78%);z-index:5}
+#lobby:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0a1118f2 0%,#0a1118c4 42%,#0a111830 100%),repeating-linear-gradient(115deg,transparent 0 90px,#ffffff04 91px 92px);pointer-events:none}
+#lobbyContent{position:relative;min-height:100%;display:flex;flex-direction:column;padding:25px clamp(20px,5vw,76px) 28px}
+nav{display:flex;align-items:center;gap:30px;border-bottom:1px solid #ffffff25;padding-bottom:18px}nav .navlinks{display:flex;gap:24px;margin-left:28px;font-size:11px;font-weight:800;letter-spacing:1.4px;color:#aab5be}nav .navlinks span:first-child{color:white;border-bottom:2px solid var(--orange);padding-bottom:22px;margin-bottom:-23px}.rightnav{margin-left:auto;font-size:11px;color:#d8e0e5;letter-spacing:1px}
+.hero{display:grid;grid-template-columns:minmax(260px,520px) 1fr;gap:20px;align-items:center;flex:1;padding:55px 0 40px}.eyebrow{font-size:11px;letter-spacing:3px;font-weight:800;color:var(--orange);margin-bottom:14px}.hero h1{font:900 clamp(58px,9vw,118px)/.82 'Barlow Condensed',Impact,sans-serif;letter-spacing:-2px;margin:0;text-transform:uppercase}.hero h1 span{color:var(--orange)}.sub{font-size:13px;line-height:1.8;color:#bdc8ce;max-width:390px;margin:24px 0 25px}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:3px;padding:14px 23px;font:800 12px Inter,sans-serif;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer}.primary{background:var(--orange);color:#fff;box-shadow:0 4px 0 #9e3d24}.primary:hover{background:#ff805d}.secondary{background:#ffffff0c;border:1px solid #ffffff38;color:#fff}.secondary:hover{background:#ffffff1c}
+.soldier{height:min(52vh,470px);min-height:270px;position:relative;display:flex;align-items:center;justify-content:center}.soldier:after{content:"";position:absolute;width:300px;height:40px;bottom:8%;border-radius:50%;background:#0008;filter:blur(16px)}.soldier img{max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 18px 25px #0007);position:relative;z-index:1}
+.bottomgrid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px}.tile{background:#101820d9;border:1px solid #ffffff26;border-top:2px solid #ffffff40;padding:15px 17px;min-height:84px}.tile label{display:block;color:#91a0aa;font-size:9px;font-weight:800;letter-spacing:1.6px;margin-bottom:8px}.tile strong{font:700 21px 'Barlow Condensed',sans-serif;letter-spacing:.5px}.tile p{margin:5px 0 0;color:#9daab3;font-size:11px}.footer{display:flex;justify-content:space-between;color:#70818d;font-size:9px;letter-spacing:1.5px;padding-top:18px}
+#modal{position:fixed;inset:0;background:#080f15d9;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}.dialog{width:min(430px,100%);padding:27px;background:#131f29;border:1px solid #ffffff30;border-top:3px solid var(--orange);box-shadow:0 20px 70px #0009}.dialog h2{font:800 35px 'Barlow Condensed',sans-serif;margin:0 0 8px}.dialog p{color:#adbbc5;font-size:13px;line-height:1.7}.dialog .btn{margin-top:10px}
+@media(max-width:760px){#lobbyContent{padding:18px}.navlinks{display:none!important}.hero{grid-template-columns:1fr;padding:48px 0 25px}.soldier{position:absolute;right:-20px;top:130px;width:55%;height:35vh;opacity:.75;z-index:-0}.heroCopy{position:relative;z-index:2}.hero h1{font-size:66px}.bottomgrid{grid-template-columns:1fr 1fr}.bottomgrid .tile:first-child{grid-column:span 2}.footer{gap:15px;line-height:1.6}.topline{left:12px;right:12px;top:12px}.chip{padding:8px;font-size:9px}#status{left:12px;bottom:12px;width:190px;padding:10px}#weapon{right:12px;bottom:12px;padding:10px}#hint{display:none}}
+</style>
+</head>
+<body>
+<div id="lobby">
+ <div id="lobbyContent">
+  <nav><div class="wordmark">DROPZONE<span> / </span>OPS</div><div class="navlinks"><span>PLAY</span><span>LOCKER</span><span>MISSIONS</span></div><div class="rightnav">SEASON 01 &nbsp; / &nbsp; BUILD 0.2</div></nav>
+  <section class="hero">
+   <div class="heroCopy">
+    <div class="eyebrow">ISLAND OPERATIONS // 001</div>
+    <h1>DROP<br>IN.<br><span>LOCK</span><br>ON.</h1>
+    <p class="sub">A small island. A dozen hostiles. Make every shot count. Gear up and enter the training zone.</p>
+    <div class="actions"><button class="btn primary" id="play">▶ &nbsp; DEPLOY</button><button class="btn secondary" id="how">HOW TO PLAY</button></div>
+   </div>
+   <div class="soldier"><img alt="Stylized tactical character" src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=720&q=80" onerror="this.style.display='none'"></div>
+  </section>
+  <section class="bottomgrid">
+   <div class="tile"><label>YOUR OPERATION</label><strong>ISLAND SKIRMISH</strong><p>Solo · PvE training · 12 hostiles</p></div>
+   <div class="tile"><label>LOADOUT / 01</label><strong>ASSAULT RIFLE</strong><p>Standard issue · 30 rounds</p></div>
+   <div class="tile"><label>STATUS</label><strong style="color:var(--mint)">READY TO DEPLOY</strong><p>All systems nominal</p></div>
+  </section>
+  <div class="footer"><span>DROPZONE OPS — UNOFFICIAL ORIGINAL PROTOTYPE</span><span>WASD MOVE · MOUSE AIM · LMB FIRE</span></div>
+ </div>
+</div>
+<div id="game"><div id="shade"></div></div>
+<div id="hud">
+ <div class="topline"><div class="wordmark">DROPZONE<span> / </span>OPS</div><div style="display:flex;gap:8px"><div class="chip">ELIMS<b id="kills">0</b></div><div class="chip">HOSTILES<b id="left">12</b></div></div></div>
+ <div id="reticle"></div><div id="notice"></div>
+ <div id="status"><div class="meterlabel"><span>HEALTH</span><span id="hpnum">100</span></div><div class="meter"><div id="hp" class="fill"></div></div><div class="meterlabel"><span>SHIELD</span><span id="shieldnum">50</span></div><div class="meter"><div id="shield" class="fill"></div></div></div>
+ <div id="weapon"><small>ASSAULT RIFLE / AUTO</small><div id="ammo">30 <span style="font-size:15px;color:#91a0aa">/ ∞</span></div></div>
+ <div id="hint">W A S D &nbsp; MOVE<br>MOUSE &nbsp; LOOK<br>LEFT CLICK &nbsp; FIRE<br>SPACE &nbsp; JUMP · SHIFT &nbsp; SPRINT<br>R &nbsp; RELOAD · ESC &nbsp; UNLOCK</div>
+</div>
+<div id="modal"><div class="dialog"><h2 id="modalTitle">FIELD BRIEFING</h2><p id="modalText">WASD to move, mouse to aim, left-click to fire, Space to jump and Shift to sprint. Eliminate all twelve hostiles.</p><button class="btn primary" id="modalClose">GOT IT</button></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const game=document.querySelector('#game'),lobby=document.querySelector('#lobby'),hud=document.querySelector('#hud'),modal=document.querySelector('#modal');
+let renderer,scene,camera,player,clock,bots=[],obstacles=[],playing=false,locked=false,fireHeld=false,lastShot=0,recoil=0;
+const keys={};let kills=0,health=100,shield=50,ammo=30;
+const mat=(c,r=.85)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+function boot(){
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x91cbd9);scene.fog=new THREE.Fog(0x91cbd9,60,155);
+ camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,250);
+ renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;game.appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xd8f3ff,0x425b3d,2));const sun=new THREE.DirectionalLight(0xffefce,3);sun.position.set(-30,50,20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);
+ const grass=mat(0x62b75d),sand=mat(0xd9c78a),wood=mat(0x795037),roof=mat(0xb95d43),wall=mat(0xe8d6ad),leaf=mat(0x277c4d),blue=mat(0x54b9d5),dark=mat(0x25333b);
+ const ground=new THREE.Mesh(new THREE.CylinderGeometry(90,94,5,64),grass);ground.position.y=-2.5;ground.receiveShadow=true;scene.add(ground);
+ const beach=new THREE.Mesh(new THREE.CylinderGeometry(95,96,1,64),sand);beach.position.y=-4.5;scene.add(beach);
+ const water=new THREE.Mesh(new THREE.CircleGeometry(180,64),mat(0x309bbd,.35));water.rotation.x=-Math.PI/2;water.position.y=-5.1;scene.add(water);
+ function box(x,y,z,sx,sy,sz,m,col=true){let o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);if(col)obstacles.push({x,z,rx:sx/2,rz:sz/2});return o}
+ function tree(x,z,s=1){box(x,1.5*s,z,.6*s,3*s,.6*s,wood,false);let c=new THREE.Mesh(new THREE.ConeGeometry(2*s,4*s,7),leaf);c.position.set(x,4*s,z);c.castShadow=true;scene.add(c);obstacles.push({x,z,rx:1.1*s,rz:1.1*s})}
+ function house(x,z,r=roof){box(x,1.5,z,7,3,6,wall);let top=new THREE.Mesh(new THREE.ConeGeometry(5.2,3,4),r);top.rotation.y=Math.PI/4;top.position.set(x,4.3,z);top.castShadow=true;scene.add(top);box(x,1,z+3.05,1.1,2,.15,wood,false);box(x+2,2,z+3.05,1,1,.15,blue,false)}
+ for(let i=0;i<27;i++){let a=i*2.399,r=23+(i%6)*8;tree(Math.cos(a)*r,Math.sin(a)*r,.7+(i%3)*.15)}
+ house(-15,-8);house(17,10,blue);house(5,-28);house(-35,17);
+ for(let i=0;i<12;i++){let x=(Math.random()-.5)*80,z=(Math.random()-.5)*80;if(Math.hypot(x,z)>20)box(x,.5,z,2,1,2,i%2?wood:sand)}
+ // Third-person avatar: capsule-like torso, head, backpack, arms, legs.
+ player={pos:new THREE.Vector3(0,0,8),vel:new THREE.Vector3(),yaw:0,pitch:0,grounded:true,model:new THREE.Group(),gun:null};
+ const skin=mat(0xc58f6a),jacket=mat(0x354a55),pants=mat(0x26313a),accent=mat(0xe86643),boots=mat(0x171f25);
+ function limb(parent,x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o}
+ const body=limb(player.model,0,1.3,0,.72,.95,.4,jacket);body.material=jacket;
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.27,14,12),skin);head.position.y=2.02;head.castShadow=true;player.model.add(head);
+ limb(player.model,0,1.55,-.26,.48,.65,.2,dark);limb(player.model,-.46,1.4,0,.22,.75,.25,jacket);limb(player.model,.46,1.4,0,.22,.75,.25,jacket);
+ limb(player.model,-.2,.48,0,.28,.8,.32,pants);limb(player.model,.2,.48,0,.28,.8,.32,pants);
+ limb(player.model,-.2,.1,-.05,.31,.2,.42,boots);limb(player.model,.2,.1,-.05,.31,.2,.42,boots);
+ limb(player.model,0,1.4,.27,.44,.52,.22,accent);
+ player.model.position.copy(player.pos);scene.add(player.model);
+ // gun on avatar's right-front side
+ const gun=new THREE.Group();limb(gun,0,0,0,.16,.17,.65,dark);limb(gun,0,-.1,.18,.1,.22,.15,boots);limb(gun,0,0,-.43,.065,.065,.35,boots);gun.position.set(.48,1.42,-.35);player.model.add(gun);player.gun=gun;
+ const botMats=[mat(0xe36b4d),mat(0x7c70ce),mat(0x289c91),mat(0xd9a345)];
+ bots=[];
+ for(let i=0;i<12;i++){const g=new THREE.Group(),x=Math.cos(i*2.4)*(22+(i%5)*7),z=Math.sin(i*2.4)*(22+(i%5)*7);limb(g,0,1.15,0,.72,1.1,.4,botMats[i%4]);const h=new THREE.Mesh(new THREE.SphereGeometry(.3,12,10),skin);h.position.y=1.92;g.add(h);limb(g,-.2,.42,0,.25,.7,.3,pants);limb(g,.2,.42,0,.25,.7,.3,pants);g.position.set(x,0,z);scene.add(g);bots.push({g,hp:100,shot:0,phase:i})}
+ clock=new THREE.Clock();animate();
+}
+function start(){if(!renderer)boot();lobby.style.display='none';game.style.display='block';hud.style.display='block';playing=true;health=100;shield=50;ammo=30;kills=0;player.pos.set(0,0,8);player.vel.set(0,0,0);player.yaw=0;player.pitch=0;player.model.visible=true;bots.forEach((b,i)=>{b.hp=100;b.g.visible=true;b.g.position.set(Math.cos(i*2.4)*(22+(i%5)*7),0,Math.sin(i*2.4)*(22+(i%5)*7));b.shot=0});updateHUD();renderer.domElement.requestPointerLock?.()}
+document.querySelector('#play').onclick=start;
+document.querySelector('#how').onclick=()=>{document.querySelector('#modalTitle').textContent='FIELD BRIEFING';document.querySelector('#modalText').textContent='WASD to move, mouse to look, left-click to fire, Space to jump and Shift to sprint. Eliminate all twelve hostiles. This prototype is single-player and needs an internet connection to load Three.js.';modal.style.display='flex'};
+document.querySelector('#modalClose').onclick=()=>modal.style.display='none';
+document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===renderer?.domElement);
+document.addEventListener('mousemove',e=>{if(!locked||!playing)return;player.yaw-=e.movementX*.0022;player.pitch=THREE.MathUtils.clamp(player.pitch-e.movementY*.0018,-.45,.5)});
+document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space')e.preventDefault();if(e.code==='KeyR'&&ammo<30){ammo=30;updateHUD()}});
+document.addEventListener('keyup',e=>keys[e.code]=false);
+document.addEventListener('mousedown',e=>{if(e.button===0&&playing){fireHeld=true;if(!locked)renderer.domElement.requestPointerLock?.();shoot()}});
+document.addEventListener('mouseup',()=>fireHeld=false);
+function say(s){const n=document.querySelector('#notice');n.textContent=s;clearTimeout(say.t);say.t=setTimeout(()=>n.textContent='',1200)}
+function shoot(){if(!playing||Date.now()-lastShot<180)return;lastShot=Date.now();if(ammo<=0){say('RELOAD — PRESS R');return}ammo--;recoil=.1;const dir=new THREE.Vector3(-Math.sin(player.yaw),player.pitch,-Math.cos(player.yaw)).normalize();const origin=camera.position.clone();let best=null,bestD=58;for(const b of bots){if(b.hp<=0)continue;const to=b.g.position.clone().add(new THREE.Vector3(0,1.25,0)).sub(origin),d=to.length();if(d<bestD&&to.normalize().dot(dir)>.989){best=b;bestD=d}}if(best){best.hp-=34;if(best.hp<=0){best.g.visible=false;kills++;say('HOSTILE DOWN')}else say('HIT CONFIRMED')}updateHUD()}
+function damage(n){let d=n,a=Math.min(shield,d);shield-=a;d-=a;health=Math.max(0,health-d);updateHUD();if(health<=0)end(false)}
+function updateHUD(){document.querySelector('#kills').textContent=kills;document.querySelector('#left').textContent=bots.filter(b=>b.hp>0).length;document.querySelector('#ammo').innerHTML=ammo+' <span style="font-size:15px;color:#91a0aa">/ ∞</span>';document.querySelector('#hpnum').textContent=Math.ceil(health);document.querySelector('#shieldnum').textContent=Math.ceil(shield);document.querySelector('#hp').style.width=health+'%';document.querySelector('#shield').style.width=shield*2+'%'}
+function end(win){playing=false;document.exitPointerLock?.();document.querySelector('#modalTitle').textContent=win?'OPERATION COMPLETE':'MISSION FAILED';document.querySelector('#modalText').textContent=win?'All hostiles eliminated. Good work, operator. Return to the lobby and deploy again.':'You were eliminated. Regroup and redeploy when ready.';document.querySelector('#modalClose').textContent='RETURN TO LOBBY';document.querySelector('#modalClose').onclick=()=>{modal.style.display='none';lobby.style.display='block';game.style.display='none';hud.style.display='none';document.querySelector('#modalClose').textContent='GOT IT';document.querySelector('#modalClose').onclick=()=>modal.style.display='none'};modal.style.display='flex'}
+function collide(x,z){for(const o of obstacles)if(Math.abs(x-o.x)<o.rx+.4&&Math.abs(z-o.z)<o.rz+.4)return true;return false}
+function animate(){requestAnimationFrame(animate);if(!renderer)return;let dt=Math.min(clock.getDelta(),.04);if(playing){const forward=new THREE.Vector3(-Math.sin(player.yaw),0,-Math.cos(player.yaw)),right=new THREE.Vector3(Math.cos(player.yaw),0,-Math.sin(player.yaw)),move=new THREE.Vector3();if(keys.KeyW)move.add(forward);if(keys.KeyS)move.sub(forward);if(keys.KeyD)move.add(right);if(keys.KeyA)move.sub(right);if(move.lengthSq())move.normalize();let speed=keys.ShiftLeft||keys.ShiftRight?11:7.5;const nx=player.pos.x+move.x*speed*dt,nz=player.pos.z+move.z*speed*dt;if(!collide(nx,player.pos.z))player.pos.x=THREE.MathUtils.clamp(nx,-85,85);if(!collide(player.pos.x,nz))player.pos.z=THREE.MathUtils.clamp(nz,-85,85);if(keys.Space&&player.grounded){player.vel.y=7.5;player.grounded=false}player.vel.y-=19*dt;player.pos.y+=player.vel.y*dt;if(player.pos.y<=0){player.pos.y=0;player.vel.y=0;player.grounded=true}
+ player.model.position.copy(player.pos);player.model.rotation.y=player.yaw;
+ // Camera follows behind and above the character; mouse controls the orbit direction.
+ const target=player.pos.clone().add(new THREE.Vector3(0,1.65,0));const back=new THREE.Vector3(Math.sin(player.yaw),0,Math.cos(player.yaw)).multiplyScalar(5.5);const desired=target.clone().add(back).add(new THREE.Vector3(0,2.1-player.pitch*2,0));camera.position.lerp(desired,1-Math.exp(-9*dt));camera.lookAt(target.clone().add(new THREE.Vector3(-Math.sin(player.yaw)*2,player.pitch*3,-Math.cos(player.yaw)*2)));
+ if(fireHeld)shoot();for(const b of bots){if(b.hp<=0)continue;let dx=player.pos.x-b.g.position.x,dz=player.pos.z-b.g.position.z,d=Math.hypot(dx,dz);b.phase+=dt;if(d>7){b.g.position.x+=dx/d*dt*1.45;b.g.position.z+=dz/d*dt*1.45;b.g.rotation.y=Math.atan2(dx,dz)}else{b.shot+=dt;if(b.shot>1.5){b.shot=0;damage(3+Math.random()*4)}}b.g.position.y=Math.abs(Math.sin(b.phase*3))*.06}
+ if(bots.every(b=>b.hp<=0))end(true);
+ }renderer.render(scene,camera)}
+addEventListener('resize',()=>{if(camera&&renderer){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}});
+</script>
+</body>
+</html>
